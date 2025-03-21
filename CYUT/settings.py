@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ECS',
     's11214274',
+    's11214266',
 ]
 
 MIDDLEWARE = [
