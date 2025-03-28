@@ -6,19 +6,7 @@ from django.db import connection
 def index(request: HttpRequest):
     with connection.cursor() as cursor:
         cursor.execute("SELECT * FROM sys_user")
+        columns = [col[0] for col in cursor.description]
         results = cursor.fetchall()
-        htmlStr = "<html><body><table border='1'>"
-        for row in results:
-            htmlStr = htmlStr + "<tr>" + \
-                f"<td>{row[0]}</td>" + \
-                f"<td>{row[1]}</td>" + \
-                f"<td>{row[2]}</td>" + \
-                f"<td>{row[3]}</td>" + \
-                f"<td>{row[4]}</td>" + \
-                f"<td>{row[5]}</td>" + \
-                f"<td>{row[6]}</td>" + \
-                f"<td>{row[7]}</td>" + \
-                "</tr>"
-        htmlStr = htmlStr + "</table></body></html>"
-
-    return HttpResponse(htmlStr)
+    return render(request, 'index.html', {'colmset': columns,
+                                           'dataset': results})
