@@ -1,7 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 from django.db import connection
 from datetime import datetime
+
+
 
 # name of the table sys_user
 # userid	usermail	userpwd	errcnt	lasttm	datest	dateed	lockuser
@@ -47,6 +49,10 @@ def index(request: HttpRequest):
             if dateed and current_date > dateed:
                 return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Your account has expired."})
 
+            # Check if the user has exceeded the limit of incorrect password attempts
+            if errcnt > 3:
+                return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Too many incorrect password attempts"})
+
             # Check if the password is correct
             if userpwd != userpwd_db:
                 # Increment the error count
@@ -55,14 +61,21 @@ def index(request: HttpRequest):
                 cursor.execute("SELECT errcnt FROM sys_user WHERE usermail = %s", [usermail])
                 errcnt = cursor.fetchone()[0]
 
-                # Check if the user has exceeded the limit of incorrect password attempts
-                if errcnt > 3:
-                    return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Too many incorrect password attempts"})
-
                 return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Incorrect user password"})
 
+                # CHeck if the account is locked
+            if lockuser == "Y":
+                return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Your account is locked"})
             # Successful login
-            return HttpResponse(f"<h1>Member with id: {userid} found!</h1>")
+            cursor.execute("UPDATE sys_user SET errcnt = 0, lasttm = %s " \
+                            "WHERE usermail = %s", [datetime.now(), usermail])
+            return render(request, "default.html")
 
     else:
         return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Unsupported HTTP method"})
+    
+def logout(request: HttpRequest):
+    # Clear the session and redirect to the login page
+    if "userid" in request.session:
+        del request.session["userid"]
+    return redirect("../")

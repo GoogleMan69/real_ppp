@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Homepage</title>
+        <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+        <style>
+            a{
+                text-decoration: none;
+                color: inherit;
+            }
+            body {
+                background-color: #f8f9fa;
+            }
+            .card {
+                border: none;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            }
+            .card-body {
+                padding: 20px;
+            }
+            .card img {
+                width: 60px;
+                height: 60px;
+                margin-bottom: 15px;
+            }
+            .card-title {
+                font-size: 1.2rem;
+                font-weight: bold;
+                color: #007bff;
+            }
+            .container {
+                margin-top: 50px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="text-center mb-5">Welcome to the Homepage</h1>
+            <div class="row g-4">
+                {% for char in "123456789aod" %}
+                    <div class="col-md-4">
+                        <a href="#" class="text-decoration-none">
+                            <div class="card text-center h-100">
+                                <div class="card-body">
+                                    <img src="{% static 'icons/ic_fluent_window_24_filled.svg' %}" alt="Icon">
+                                    <h5 class="card-title">Item {{ char }}</h5>
+                                    <p class="text-muted">This is item number {{ forloop.counter }}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+                <!-- Logout Button -->
+                <div class="col-md-4">
+                    <a href="./logout/" class="text-decoration-none">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <img src="{% static 'icons/ic_fluent_sign_out_24_filled.svg' %}" alt="Logout Icon">
+                                <h5 class="card-title">Logout</h5>
+                                <p class="text-muted">Click to log out</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    </body>
+</html>
