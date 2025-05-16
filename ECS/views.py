@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 from django.db import connection
 from datetime import datetime
+from django.urls import reverse
 
 
 
@@ -73,9 +74,19 @@ def index(request: HttpRequest):
 
     else:
         return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Unsupported HTTP method"})
+    request.session["userid"] = results[0][0]
     
 def logout(request: HttpRequest):
     # Clear the session and redirect to the login page
     if "userid" in request.session:
         del request.session["userid"]
     return redirect("../")
+
+def users(request: HttpRequest):
+    with connection.cursor() as cursor:
+        # Fetch all users from the sys_user table
+        cursor.execute("SELECT userid, usermail FROM sys_user")
+        users = cursor.fetchall()  # List of tuples (userid, usermail)
+
+    # Pass the user data to the template
+    return render(request, "users.html", {"users": users})
