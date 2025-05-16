@@ -4,8 +4,6 @@ from django.db import connection
 from datetime import datetime
 from django.urls import reverse
 
-
-
 # name of the table sys_user
 # userid	usermail	userpwd	errcnt	lasttm	datest	dateed	lockuser
 
@@ -61,21 +59,20 @@ def index(request: HttpRequest):
                 # Fetch the updated error count
                 cursor.execute("SELECT errcnt FROM sys_user WHERE usermail = %s", [usermail])
                 errcnt = cursor.fetchone()[0]
-
                 return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Incorrect user password"})
 
-                # CHeck if the account is locked
+            # Check if the account is locked
             if lockuser == "Y":
                 return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Your account is locked"})
+
             # Successful login
-            cursor.execute("UPDATE sys_user SET errcnt = 0, lasttm = %s " \
-                            "WHERE usermail = %s", [datetime.now(), usermail])
+            cursor.execute("UPDATE sys_user SET errcnt = 0, lasttm = %s WHERE usermail = %s", [datetime.now(), usermail])
+            request.session["userid"] = userid  # <-- Set session BEFORE returning
             return render(request, "default.html")
 
     else:
         return render(request, "index.html", {"errtitle": "Login failed", "errmsg": "Unsupported HTTP method"})
-    request.session["userid"] = results[0][0]
-    
+
 def logout(request: HttpRequest):
     # Clear the session and redirect to the login page
     if "userid" in request.session:
@@ -83,10 +80,91 @@ def logout(request: HttpRequest):
     return redirect("../")
 
 def users(request: HttpRequest):
+    msg = errmsg = None
+    if request.method == "POST":
+        # Delete user
+        delete_userid = request.POST.get("delete_userid")
+        if delete_userid:
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM sys_user WHERE userid = %s", [delete_userid])
+            msg = "User deleted successfully."
+        # Edit user
+        elif request.POST.get("edit_userid"):
+            edit_userid = request.POST.get("edit_userid")
+            edit_usermail = request.POST.get("edit_usermail")
+            edit_userpwd = request.POST.get("edit_userpwd")
+            edit_errcnt = request.POST.get("edit_errcnt")
+            edit_lasttm = request.POST.get("edit_lasttm")
+            edit_datest = request.POST.get("edit_datest")
+            edit_dateed = request.POST.get("edit_dateed")
+            edit_lockuser = request.POST.get("edit_lockuser")
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE sys_user SET usermail=%s, userpwd=%s, errcnt=%s, lasttm=%s, datest=%s, dateed=%s, lockuser=%s
+                    WHERE userid=%s
+                """, [edit_usermail, edit_userpwd, edit_errcnt, edit_lasttm, edit_datest, edit_dateed, edit_lockuser, edit_userid])
+            msg = "User updated successfully."
+        # Add user (should not be used if using user_ins page, but kept for completeness)
+        else:
+            usermail = request.POST.get("usermail")
+            userpwd = request.POST.get("userpwd")
+            if not usermail or not userpwd:
+                errmsg = "Email and password are required."
+            else:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT COUNT(*) FROM sys_user WHERE usermail = %s", [usermail])
+                    if cursor.fetchone()[0] > 0:
+                        errmsg = "User already exists."
+                    else:
+                        cursor.execute(
+                            "INSERT INTO sys_user (usermail, userpwd, errcnt, lasttm, datest, dateed, lockuser) VALUES (%s, %s, 0, NULL, NULL, NULL, 'N')",
+                            [usermail, userpwd]
+                        )
+                        msg = "User added successfully."
     with connection.cursor() as cursor:
-        # Fetch all users from the sys_user table
-        cursor.execute("SELECT userid, usermail FROM sys_user")
-        users = cursor.fetchall()  # List of tuples (userid, usermail)
+        cursor.execute("SELECT userid, usermail, userpwd, errcnt, lasttm, datest, dateed, lockuser FROM sys_user")
+        users = cursor.fetchall()
+    return render(request, "users.html", {"users": users, "errmsg": errmsg, "msg": msg})
 
-    # Pass the user data to the template
-    return render(request, "users.html", {"users": users})
+def user_ins(request: HttpRequest):
+    # Only allow access if logged in
+    if not request.session.get("userid"):
+        return redirect("homec")  # or use your login page name
+
+    msg = errmsg = None
+    if request.method == "POST":
+        # why do i have to declare all of them one by one?
+        # i should be able to use a loop to get all the values
+        # but i don't want to use a loop because it will be less readable
+        # is coding style more important than readability?
+        # i don't think so
+        # is django dying?
+        # AI is writinng most of the code for me
+        # i don't think so
+        usermail = request.POST.get("usermail")
+        userpwd = request.POST.get("userpwd")
+        errcnt = request.POST.get("errcnt") or 0
+        lasttm = request.POST.get("lasttm") or None
+        datest = request.POST.get("datest") or None
+        dateed = request.POST.get("dateed") or None
+        lockuser = request.POST.get("lockuser") or "N"
+        if not usermail or not userpwd:
+            errmsg = "Email and password are required."
+        else:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT COUNT(*) FROM sys_user WHERE usermail = %s", [usermail])
+                if cursor.fetchone()[0] > 0:
+                    errmsg = "User already exists."
+                else:
+                    cursor.execute(
+                        "INSERT INTO sys_user (usermail, userpwd, errcnt, lasttm, datest, dateed, lockuser) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                        [usermail, userpwd, errcnt, lasttm, datest, dateed, lockuser]
+                    )
+                    msg = "User added successfully."
+    return render(request, "user_ins.html", {"errmsg": errmsg, "msg": msg})
+
+
+
+
+
+ 

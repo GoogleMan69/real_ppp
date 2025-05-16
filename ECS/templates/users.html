@@ -7,27 +7,29 @@
     <title>Users</title>
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .table-container {
-            margin-top: 50px;
-        }
-        .table {
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+        body { background-color: #f8f9fa; }
+        .table-container { margin-top: 50px; }
+        .table { background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
 <body>
     <div class="container table-container">
         <h1 class="text-center mb-4">Users</h1>
+        <div class="mb-3 text-end">
+            <a href="{% url 'user_ins' %}" class="btn btn-success">Add User</a>
+        </div>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th scope="col">User ID</th>
-                    <th scope="col">Email</th>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Password</th>
+                    <th>Error Count</th>
+                    <th>Last Time</th>
+                    <th>Date Start</th>
+                    <th>Date End</th>
+                    <th>Lock User</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,6 +37,55 @@
                 <tr>
                     <td>{{ user.0 }}</td>
                     <td>{{ user.1 }}</td>
+                    <td>{{ user.2 }}</td>
+                    <td>{{ user.3 }}</td>
+                    <td>{{ user.4 }}</td>
+                    <td>{{ user.5 }}</td>
+                    <td>{{ user.6 }}</td>
+                    <td>{{ user.7 }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#editRow{{ user.0 }}">Edit</button>
+                        <form method="post" action="{% url 'users' %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete_userid" value="{{ user.0 }}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this user?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr class="collapse" id="editRow{{ user.0 }}">
+                    <td colspan="9">
+                        <form method="post" action="{% url 'users' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="edit_userid" value="{{ user.0 }}">
+                            <div class="row">
+                                <div class="col-md-2 mb-2">
+                                    <input type="email" class="form-control" name="edit_usermail" value="{{ user.1 }}" required>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <input type="text" class="form-control" name="edit_userpwd" value="{{ user.2 }}" required>
+                                </div>
+                                <div class="col-md-1 mb-2">
+                                    <input type="number" class="form-control" name="edit_errcnt" value="{{ user.3 }}">
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <input type="text" class="form-control" name="edit_lasttm" value="{{ user.4 }}">
+                                </div>
+                                <div class="col-md-1 mb-2">
+                                    <input type="text" class="form-control" name="edit_datest" value="{{ user.5 }}">
+                                </div>
+                                <div class="col-md-1 mb-2">
+                                    <input type="text" class="form-control" name="edit_dateed" value="{{ user.6 }}">
+                                </div>
+                                <div class="col-md-1 mb-2">
+                                    <input type="text" class="form-control" name="edit_lockuser" value="{{ user.7 }}">
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <button type="submit" class="btn btn-success btn-sm">Save</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#editRow{{ user.0 }}">Cancel</button>
+                                </div>
+                            </div>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
