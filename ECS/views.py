@@ -139,7 +139,6 @@ def user_ins(request: HttpRequest):
         # is coding style more important than readability?
         # i don't think so
         # is django dying?
-        # AI is writinng most of the code for me
         # i don't think so
         usermail = request.POST.get("usermail")
         userpwd = request.POST.get("userpwd")
