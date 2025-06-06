@@ -162,8 +162,50 @@ def user_ins(request: HttpRequest):
                     msg = "User added successfully."
     return render(request, "user_ins.html", {"errmsg": errmsg, "msg": msg})
 
+def user_edit(request: HttpRequest):
+    if request.method == "GET":
+        userid = request.GET.get("userid")
+        if not userid:
+            return redirect("users")
 
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM sys_user WHERE userid = %s", [userid])
+            user = cursor.fetchone()
+            if not user:
+                return redirect("users")
+        
+        return render(request, "edit_user.html", {"user": user})
 
+    elif request.method == "POST":
+        userid = request.POST.get("userid")
+        if request.POST.get("delete_user"):
+            # Delete user and redirect
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM sys_user WHERE userid = %s", [userid])
+            return redirect("users")
+        else:
+            # Update user
+            usermail = request.POST.get("usermail")
+            userpwd = request.POST.get("userpwd")
+            errcnt = request.POST.get("errcnt", 0)
+            lasttm = request.POST.get("lasttm") # Consider updating this to current time on edit, or remove if not editable
+            datest = request.POST.get("datest")
+            dateed = request.POST.get("dateed")
+            lockuser = request.POST.get("lockuser", "N")
 
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE sys_user SET 
+                        usermail = %s,
+                        userpwd = %s,
+                        errcnt = %s,
+                        lasttm = %s,
+                        datest = %s,
+                        dateed = %s,
+                        lockuser = %s
+                    WHERE userid = %s
+                """, [usermail, userpwd, errcnt, lasttm, datest, dateed, lockuser, userid])
+            
+            return redirect("users")
 
  
